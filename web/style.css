@@ -1,0 +1,201 @@
+/* ================================================================
+   动画评分排名 — 层次贝叶斯
+   ================================================================ */
+
+:root {
+    --bg: #fafafa;
+    --card: #fff;
+    --text: #333;
+    --muted: #888;
+    --border: #e0e0e0;
+    --accent: #4a6cf7;
+    --up: #22c55e;
+    --down: #ef4444;
+    --hover: #f5f7ff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+}
+
+/* ---- header ---- */
+header {
+    text-align: center;
+    padding: 32px 0 20px;
+}
+header h1 { font-size: 1.8rem; font-weight: 700; }
+header .subtitle { color: var(--muted); font-size: 0.95rem; margin-top: 6px; }
+
+/* ---- controls ---- */
+.controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+.controls input[type="text"] {
+    flex: 1; min-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+}
+.controls input[type="text"]:focus { border-color: var(--accent); }
+.controls select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: var(--card);
+    cursor: pointer;
+}
+.toggle-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* ---- table ---- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+thead th {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    cursor: default;
+    user-select: none;
+}
+tbody td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--hover); }
+
+.col-rank { width: 40px; text-align: center; color: var(--muted); }
+.col-title { }
+.col-year { width: 60px; color: var(--muted); font-size: 0.85rem; }
+.col-score { width: 56px; text-align: right; }
+.col-hb { width: 64px; text-align: right; font-weight: 600; }
+.col-imdb { width: 56px; text-align: right; color: var(--muted); }
+.col-delta { width: 56px; text-align: right; }
+
+.delta-up { color: var(--up); }
+.delta-down { color: var(--down); }
+.delta-zero { color: var(--muted); }
+
+.loading { text-align: center; color: var(--muted); padding: 40px; }
+
+/* ---- load more ---- */
+#load-more-wrap { text-align: center; padding: 20px 0; }
+#load-more {
+    padding: 10px 32px;
+    font-size: 0.9rem;
+    border: 1px solid var(--accent);
+    background: var(--card);
+    color: var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+}
+#load-more:hover { background: var(--accent); color: #fff; }
+
+/* ---- stats panel ---- */
+.stats-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 0 0 20px;
+}
+.stats-panel.hidden { display: none; }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.stat-item { text-align: center; }
+.stat-value { font-size: 1.3rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { font-size: 0.75rem; color: var(--muted); cursor: help; }
+.stats-note {
+    font-size: 0.82rem; color: #4a5568; line-height: 1.8;
+    padding-top: 12px; border-top: 1px solid var(--border);
+}
+.overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+}
+.overlay.hidden { display: none; }
+.detail-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 24px 28px;
+    max-width: 520px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.detail-card h2 { font-size: 1.25rem; margin-bottom: 12px; }
+.detail-card .close-btn {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none;
+    font-size: 1.5rem; color: var(--muted);
+    cursor: pointer;
+}
+.detail-row {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; font-size: 0.9rem;
+    border-bottom: 1px solid var(--border);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--muted); }
+.detail-value { font-weight: 500; }
+.detail-explain {
+    margin-top: 16px; padding: 12px;
+    background: #f0f4ff;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: #4a5568;
+}
+
+/* ---- footer ---- */
+footer {
+    text-align: center;
+    padding: 30px 0 10px;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+footer a { color: var(--accent); }
+
+/* ---- responsive ---- */
+@media (max-width: 600px) {
+    .col-year, .col-score, .col-imdb, .col-delta { display: none; }
+    .controls { flex-direction: column; align-items: stretch; }
+}

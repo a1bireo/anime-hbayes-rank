@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>动画评分排名 — 层次贝叶斯</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>动画评分排名</h1>
+  <p class="subtitle">考虑评分者习惯差异后的更公平排名。共 <span id="total-count">-</span> 部作品。</p>
+  <p class="subtitle"><a href="#" id="toggle-stats">查看统计参数</a></p>
+</header>
+
+<section id="stats-panel" class="stats-panel hidden">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <span class="stat-value" id="stat-users">-</span>
+      <span class="stat-label">用户数</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-subjects">-</span>
+      <span class="stat-label">作品数</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-ratings">-</span>
+      <span class="stat-label">评分数</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-mu_q">-</span>
+      <span class="stat-label" title="条目质量的全局中心，越接近10说明整体评分越高">条目质量中心 μ_q</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-tau_q">-</span>
+      <span class="stat-label" title="条目之间真实质量的差异程度，越大说明作品好坏差距越明显">作品差异 τ_q</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-tau_b">-</span>
+      <span class="stat-label" title="用户评分习惯的差异程度，越大说明手松/手紧的差距越大">用户偏差 τ_b</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-noise">-</span>
+      <span class="stat-label" title="大多数用户的评分波动范围">用户噪声中位数</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-loss">-</span>
+      <span class="stat-label" title="模型拟合程度，越小越好">最终 Loss</span>
+    </div>
+  </div>
+  <p class="stats-note">
+    <strong>怎么看这些参数？</strong><br>
+    τ_b 远大于 τ_q → 用户之间的评分习惯差异，远大于作品本身的质量差异。这也是为什么要做这个排名——不纠正的话，"手松的人多的作品"排名就虚高。<br>
+    用户噪声中位数 ≈ 0.82 → 大部分人的评分标准差在 0.8 左右，即一个人在 7-9 分之间浮动是正常的。
+  </p>
+</section>
+
+<section class="controls">
+  <input type="text" id="search" placeholder="搜索作品名（中文/日文/罗马字）...">
+  <select id="sort-by">
+    <option value="hb_rank">HB 排名</option>
+    <option value="imdb_rank">IMDb 排名</option>
+    <option value="delta">排名变化（HB提升最多）</option>
+    <option value="-delta">排名变化（HB降低最多）</option>
+    <option value="score">Bangumi 评分</option>
+    <option value="date">年份</option>
+  </select>
+  <label class="toggle-label">
+    <input type="checkbox" id="show-delta" checked> 显示排名变化
+  </label>
+</section>
+
+<main>
+  <table id="ranking-table">
+    <thead>
+      <tr>
+        <th class="col-rank">#</th>
+        <th class="col-title">作品</th>
+        <th class="col-year">年份</th>
+        <th class="col-score">原始分</th>
+        <th class="col-hb">HB 分</th>
+        <th class="col-imdb">IMDb #</th>
+        <th class="col-delta" id="delta-header">变化</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      <tr><td colspan="7" class="loading">加载中...</td></tr>
+    </tbody>
+  </table>
+  <div id="load-more-wrap">
+    <button id="load-more" style="display:none">加载更多 (显示前 <span id="shown-count">50</span> / <span id="filtered-count">-</span>)</button>
+  </div>
+</main>
+
+<div id="detail-overlay" class="overlay hidden">
+  <div class="detail-card">
+    <button class="close-btn">&times;</button>
+    <h2 id="detail-title"></h2>
+    <a id="detail-link" href="#" target="_blank" rel="noopener" style="color:var(--accent);font-size:0.85rem;">在 Bangumi 查看 →</a>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
+<footer>
+  <p>数据来源: Bangumi 15M 数据集 | 算法: 层次贝叶斯 (Hierarchical Bayes) | <a href="data/rankings.json">原始 JSON</a></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

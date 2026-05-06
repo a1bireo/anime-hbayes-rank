@@ -1,0 +1,24 @@
+# 数据文件 (太大，不纳入版本控制)
+data/raw_data/
+data/_subject_user_matrix*.csv
+data/_ground_truth.csv
+data/_test_*.csv
+data/algorithm_matrix/
+data/archive.zip
+
+# 运行产物
+solution/
+*.log
+web/data/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# WSL
+.claude/
